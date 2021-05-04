@@ -66,6 +66,8 @@ private:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
 
+  double min_move_vel_;
+
   bool first_cycle_;
   bool reset_required_;
 

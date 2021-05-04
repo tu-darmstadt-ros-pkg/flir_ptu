@@ -41,6 +41,8 @@ bool PtuHwInterface::init( ros::NodeHandle &nh, ros::NodeHandle &pnh )
   int32_t baud;
   ros::param::param<std::string>("~port", port, PTU_DEFAULT_PORT);
   ros::param::param<int32_t>("~baud", baud, PTU_DEFAULT_BAUD);
+  ros::param::param<double>("~min_move_vel", min_move_vel_, 0.005);
+
 
   // Connect to the PTU
   ROS_INFO_STREAM("Attempting to connect to FLIR PTU on " << port);
@@ -72,6 +74,8 @@ bool PtuHwInterface::init( ros::NodeHandle &nh, ros::NodeHandle &pnh )
 
   ROS_INFO("FLIR PTU initialized.");
 
+  first_cycle_ = false;
+
   return true;
 }
 
@@ -82,7 +86,10 @@ PtuHwInterface::~PtuHwInterface()
 void PtuHwInterface::read( const ros::Time &t, const ros::Duration &d )
 {
   if (!ptu_)
+  {
+    reset_required_ = true;
     return;
+  }
 
   cur_pos_[0] = ptu_->getPosition(PTU_PAN);
   cur_pos_[1] = ptu_->getPosition(PTU_TILT);
@@ -108,12 +115,22 @@ void PtuHwInterface::write( const ros::Time &t, const ros::Duration &d )
     ROS_DEBUG_STREAM( "commands: " << " pos 0: " << goal_pos_[0] << " pos 1: " << goal_pos_[1] );
     ptu_->setPosition(PTU_PAN, goal_pos_[0]);
     ptu_->setPosition(PTU_TILT, goal_pos_[1]);
+    ptu_->setSpeed(PTU_PAN, 0.25);
+    ptu_->setSpeed(PTU_TILT, 0.25);
   }
   else if ( control_mode_ == ControlMode::Velocity )
   {
     ROS_DEBUG_STREAM( "commands: " << " vel 0: " << goal_vel_[0] << " vel 1: " << goal_vel_[1] );
-    ptu_->setSpeed(PTU_PAN, goal_vel_[0]);
-    ptu_->setSpeed(PTU_TILT, goal_vel_[1]);
+
+    if (std::abs(goal_vel_[0]) >= min_move_vel_)
+      ptu_->setSpeed(PTU_PAN, goal_vel_[0]);
+    else
+      ptu_->setSpeed(PTU_PAN, 0);
+
+    if (std::abs(goal_vel_[1]) >= min_move_vel_)
+      ptu_->setSpeed(PTU_TILT, goal_vel_[1]);
+    else
+      ptu_->setSpeed(PTU_TILT, 0);
   }
 }
 
