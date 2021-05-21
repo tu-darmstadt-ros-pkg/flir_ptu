@@ -91,10 +91,10 @@ void PtuHwInterface::read( const ros::Time &t, const ros::Duration &d )
     return;
   }
 
-  cur_pos_[0] = ptu_->getPosition(PTU_PAN);
-  cur_pos_[1] = ptu_->getPosition(PTU_TILT);
-  cur_vel_[0] = ptu_->getSpeed(PTU_PAN);
-  cur_vel_[1] = ptu_->getSpeed(PTU_TILT);
+  cur_pos_[0] = -ptu_->getPosition(PTU_PAN);
+  cur_pos_[1] = -ptu_->getPosition(PTU_TILT);
+  cur_vel_[0] = -ptu_->getSpeed(PTU_PAN);
+  cur_vel_[1] = -ptu_->getSpeed(PTU_TILT);
   cur_eff_[0] = 0;
   cur_eff_[1] = 0;
 
@@ -113,8 +113,8 @@ void PtuHwInterface::write( const ros::Time &t, const ros::Duration &d )
   if ( control_mode_ == ControlMode::Position )
   {
     ROS_DEBUG_STREAM( "commands: " << " pos 0: " << goal_pos_[0] << " pos 1: " << goal_pos_[1] );
-    ptu_->setPosition(PTU_PAN, goal_pos_[0]);
-    ptu_->setPosition(PTU_TILT, goal_pos_[1]);
+    ptu_->setPosition(PTU_PAN, -goal_pos_[0]);
+    ptu_->setPosition(PTU_TILT, -goal_pos_[1]);
     ptu_->setSpeed(PTU_PAN, 0.25);
     ptu_->setSpeed(PTU_TILT, 0.25);
   }
@@ -123,12 +123,12 @@ void PtuHwInterface::write( const ros::Time &t, const ros::Duration &d )
     ROS_DEBUG_STREAM( "commands: " << " vel 0: " << goal_vel_[0] << " vel 1: " << goal_vel_[1] );
 
     if (std::abs(goal_vel_[0]) >= min_move_vel_)
-      ptu_->setSpeed(PTU_PAN, goal_vel_[0]);
+      ptu_->setSpeed(PTU_PAN, -goal_vel_[0]);
     else
       ptu_->setSpeed(PTU_PAN, 0);
 
     if (std::abs(goal_vel_[1]) >= min_move_vel_)
-      ptu_->setSpeed(PTU_TILT, goal_vel_[1]);
+      ptu_->setSpeed(PTU_TILT, -goal_vel_[1]);
     else
       ptu_->setSpeed(PTU_TILT, 0);
   }
